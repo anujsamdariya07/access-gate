@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     const reqBody = await request.json();
     const { email, password } = reqBody;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
       return NextResponse.json(
@@ -19,12 +19,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('User exists...');
+    console.log('User exists...', user);
+    console.log(user.password)
 
     // Matchiong password
     const validPassword = await bcrypt.compare(password, user.password);
 
-    if (validPassword) {
+    if (!validPassword) {
       return NextResponse.json(
         { message: 'Incorrect Password! Check your credentials...' },
         { status: 400 }
@@ -53,6 +54,6 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error: any) {
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    return NextResponse.json({ msg: 'You have an error...', message: error.message }, { status: 500 });
   }
 }

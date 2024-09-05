@@ -4,18 +4,25 @@ import bcrypt from 'bcryptjs';
 
 export const sendEmail = async ({ email, emailType, userId }: any) => {
   try {
-    const hashedToken = bcrypt.hash(userId.toString(), 10);
+    // Use await before hash method
+    const hashedToken = await bcrypt.hash(userId.toString(), 10);
+    console.log('Hashed Token: ', hashedToken);
 
     // TODO: configure mail for usage
     if (emailType === 'VERIFY') {
-      await User.findByIdAndUpdate(userId, {
-        verifyToken: hashedToken,
-        verifyTokenExpiry: Date.now() + 3600000,
+      console.log('We are here...')
+      await User.findByIdAndUpdate({_id: userId}, {
+        $set: {
+          verifyToken: hashedToken,
+          verifyTokenExpiry: Date.now() + 3600000,
+        },
       });
     } else if (emailType === 'RESET') {
       await User.findByIdAndUpdate(userId, {
-        forgotPasswordToken: hashedToken,
-        forgotPasswordExpiry: Date.now() + 3600000,
+        $set: {
+          forgotPasswordToken: hashedToken,
+          forgotPasswordExpiry: Date.now() + 3600000,
+        },
       });
     }
 
@@ -33,7 +40,9 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
       to: email,
       subject:
         emailType === 'VERIFY' ? 'Verify Your Email' : 'Reset Your Password',
-      html: `<p>Click <a href="${process.env.DOMAIN}/verifymail?token=${hashedToken}">here</a> to ${
+      html: `<p>Click <a href="${
+        process.env.DOMAIN
+      }/verifymail?token=${hashedToken}">here</a> to ${
         emailType === 'VERIFY' ? 'verify your email.' : 'reset your password.'
       } or copy paste the link below in your browser.
       <br>
